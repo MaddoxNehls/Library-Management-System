@@ -1,7 +1,7 @@
 # README
 
 ## Project Name
-**Library Management System (Group 62 – DataDynamos)**
+**Library Management System**
 
 ## Overview
 This project implements a web-based interface for the Riverside City Library to manage books, copies, authors, genres, patrons, and loans. It allows staff to add, view, edit, and delete records for each entity, including handling many-to-many relationships (Books ↔ Authors, Books ↔ Genres) via intersection tables. The application uses a MySQL database, Node.js/Express on the server side, and vanilla HTML/CSS/JavaScript on the client side.
