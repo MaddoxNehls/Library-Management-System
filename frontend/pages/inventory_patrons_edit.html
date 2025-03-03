@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Patron</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    async function fetchPatron(patronID) {
+      try {
+        const response = await fetch(`/patrons/${patronID}`);
+        if (!response.ok) throw new Error("Patron not found");
+        const patron = await response.json();
+        document.getElementById("patronID").value = patron.patronID;
+        document.getElementById("firstName").value = patron.firstName;
+        document.getElementById("lastName").value = patron.lastName;
+        document.getElementById("email").value = patron.email;
+        document.getElementById("phone").value = patron.phone;
+        document.getElementById("pageTitle").textContent = `Editing Patron ID: ${patron.patronID}`;
+      } catch (error) {
+        console.error("Error fetching patron details:", error);
+        alert("Error fetching patron details.");
+      }
+    }
+    
+    async function updatePatron(event) {
+      event.preventDefault();
+      const patronID = document.getElementById("patronID").value;
+      const firstName = document.getElementById("firstName").value;
+      const lastName = document.getElementById("lastName").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const payload = { firstName, lastName, email, phone };
+      try {
+        const response = await fetch(`/patrons/${patronID}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "patrons.html";
+      } catch (error) {
+        console.error("Error updating patron:", error);
+        alert("Error updating patron.");
+      }
+    }
+    
+    // Formats phone number to XXX-XXX-XXXX format.
+    function formatPhoneNumber(value) {
+      // Remove all non-digit characters
+      let digits = value.replace(/\D/g, '');
+      // Limit to 10 digits
+      digits = digits.substring(0, 10);
+      // Insert dashes after the third and sixth digits
+      if (digits.length > 6) {
+        return digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6);
+      } else if (digits.length > 3) {
+        return digits.slice(0, 3) + '-' + digits.slice(3);
+      }
+      return digits;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const patronID = getQueryParam("patronID");
+      if (patronID) {
+        fetchPatron(patronID);
+      } else {
+        alert("No Patron ID provided.");
+      }
+      document.getElementById("editPatronForm").addEventListener("submit", updatePatron);
+      
+      const phoneInput = document.getElementById("phone");
+      phoneInput.addEventListener("input", (e) => {
+        const formatted = formatPhoneNumber(e.target.value);
+        e.target.value = formatted;
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Edit Patron</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a class="active" href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form id="editPatronForm" action="#" method="post">
+      <label for="patronID">Patron ID:</label>
+      <input type="text" id="patronID" name="patronID" readonly>
+      
+      <label for="firstName">First Name:</label>
+      <input type="text" id="firstName" name="firstName" required>
+      
+      <label for="lastName">Last Name:</label>
+      <input type="text" id="lastName" name="lastName" required>
+      
+      <label for="email">Email Address:</label>
+      <input type="email" id="email" name="email" required>
+      
+      <label for="phone">Phone Number:</label>
+      <input type="text" id="phone" name="phone" required>
+      
+      <button type="submit">Submit Update</button>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='patrons.html'">
+            Return to Browse Patrons
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

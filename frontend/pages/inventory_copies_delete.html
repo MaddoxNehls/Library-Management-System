@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Delete Copy</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    async function fetchCopyDetails(copyID) {
+      try {
+        const response = await fetch(`/copies/${copyID}`);
+        if (!response.ok) throw new Error("Copy not found");
+        const copy = await response.json();
+        document.querySelector(".copy-info").innerHTML = `
+          <tr>
+            <td>${copy.copyID}</td>
+            <td>${copy.isbn}</td>
+            <td>${copy.title}</td>
+            <td>${copy.edition}</td>
+            <td>${copy.status}</td>
+          </tr>
+        `;
+        document.getElementById('pageTitle').textContent = `Delete Copy: ID ${copy.copyID} (${copy.title})`;
+      } catch (error) {
+        console.error("Error fetching copy details:", error);
+        document.querySelector(".copy-info").innerHTML = "<tr><td colspan='5'>Error loading copy information.</td></tr>";
+      }
+    }
+    
+    async function deleteCopy() {
+      const copyID = getQueryParam("copyID");
+      try {
+        const response = await fetch(`/copies/${copyID}`, { method: 'DELETE' });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "inventory_copies.html";
+      } catch (error) {
+        console.error("Error deleting copy:", error);
+        alert("Error deleting copy.");
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+      const copyID = getQueryParam("copyID");
+      if (copyID) {
+        fetchCopyDetails(copyID);
+      } else {
+        alert("No Copy ID specified.");
+      }
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (confirm("Are you sure you want to delete this copy?")) {
+          deleteCopy();
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Delete Copy</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a class="active" href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <p>Deleting the copy cannot be undone.</p>
+    <nav class="left-nav">
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_copies.html'">
+            Return to Browse Copies
+          </button>
+        </li>
+      </ul>
+    </nav>
+    <table>
+      <thead>
+        <tr>
+          <th>Copy ID</th>
+          <th>ISBN</th>
+          <th>Title</th>
+          <th>Edition</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody class="copy-info">
+        <tr><td colspan="5">Loading copy information...</td></tr>
+      </tbody>
+    </table>
+    <div class="confirmation">
+      <form action="#" method="post">
+          <div class="button-group">
+          <button type="submit" name="confirm" value="yes">Yes</button>
+          <button type="button" onclick="window.location.href='inventory_copies.html'">No</button>
+          </div>
+      </form>
+    </div>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

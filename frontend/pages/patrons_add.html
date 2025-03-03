@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Patron</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    async function submitPatron(event) {
+      event.preventDefault();
+      const firstName = document.getElementById("firstName").value;
+      const lastName = document.getElementById("lastName").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const payload = { firstName, lastName, email, phone };
+      try {
+        const response = await fetch('/patrons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "patrons.html";
+      } catch (error) {
+        console.error("Error adding patron:", error);
+        alert("Failed to add patron.");
+      }
+    }
+
+    // Formats phone number to XXX-XXX-XXXX format.
+    function formatPhoneNumber(value) {
+      // Remove all non-digit characters
+      let digits = value.replace(/\D/g, '');
+      // Limit to 10 digits
+      digits = digits.substring(0, 10);
+      // Insert dashes 
+      if (digits.length > 6) {
+        return digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6);
+      } else if (digits.length > 3) {
+        return digits.slice(0, 3) + '-' + digits.slice(3);
+      }
+      return digits;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelector("form").addEventListener("submit", submitPatron);
+      const phoneInput = document.getElementById("phone");
+      phoneInput.addEventListener("input", (e) => {
+        const formatted = formatPhoneNumber(e.target.value);
+        e.target.value = formatted;
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Add Patron</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a class="active" href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form action="#" method="post">
+      <label for="firstName">First Name:</label>
+      <input type="text" id="firstName" name="firstName" required>
+      
+      <label for="lastName">Last Name:</label>
+      <input type="text" id="lastName" name="lastName" required>
+      
+      <label for="email">Email Address:</label>
+      <input type="email" id="email" name="email" required>
+      
+      <label for="phone">Phone Number:</label>
+      <input type="text" id="phone" name="phone" required>
+      
+      <button type="submit">Add Patron</button>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='patrons.html'">
+            Return to Browse Patrons
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

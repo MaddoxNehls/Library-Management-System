@@ -1,0 +1,330 @@
+<!--
+ * Citation:
+ * Date: 02/26/2025
+ * Based on: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+ * Title: Fetch API - Web APIs | MDN
+ * Author: Mozilla Contributors
+ * Notes: Used for reference in implementing data fetching, response handling, and dynamic UI updates
+ -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Book</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    // Global variables to hold the original authors and genres.
+    let originalAuthors = [];
+    let originalGenres = [];
+
+    // Extract query parameter from URL.
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    // Fetch book details and pre-fill the form.
+    async function fetchBookDetails(isbn) {
+      try {
+        const response = await fetch(`/books/${isbn}`);
+        if (!response.ok) throw new Error("Book not found");
+        const book = await response.json();
+        document.getElementById("isbn").value = book.isbn;
+        document.getElementById("title").value = book.title;
+        document.getElementById("pubYear").value = book.publicationYear;
+        document.getElementById("edition").value = book.edition;
+        document.getElementById("pageTitle").textContent = `Editing Book: ISBN ${book.isbn} (${book.title})`;
+        
+        // Populate current authors list.
+        const currentAuthorsList = document.getElementById("currentAuthors");
+        currentAuthorsList.innerHTML = "";
+        if (book.authors) {
+          originalAuthors = book.authors.split(',').map(a => a.trim());
+          originalAuthors.forEach(author => {
+            const li = document.createElement("li");
+            li.textContent = author + " ";
+            const btn = document.createElement("button");
+            btn.textContent = "Delete";
+            btn.type = "button";
+            btn.onclick = function() {
+              if (currentAuthorsList.children.length > 1) {
+                li.remove();
+              } else {
+                alert("At least one author is required.");
+              }
+            };
+            li.appendChild(btn);
+            currentAuthorsList.appendChild(li);
+          });
+        }
+        
+        // Populate current genres list.
+        const currentGenresList = document.getElementById("currentGenres");
+        currentGenresList.innerHTML = "";
+        if (book.genres) {
+          originalGenres = book.genres.split(',').map(g => g.trim());
+          originalGenres.forEach(genre => {
+            const li = document.createElement("li");
+            li.textContent = genre + " ";
+            const btn = document.createElement("button");
+            btn.textContent = "Delete";
+            btn.type = "button";
+            btn.onclick = function() {
+              if (currentGenresList.children.length > 1) {
+                li.remove();
+              } else {
+                alert("At least one genre is required.");
+              }
+            };
+            li.appendChild(btn);
+            currentGenresList.appendChild(li);
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching book details:", error);
+        alert("Error fetching book details.");
+      }
+    }
+    
+    // Add additional authors from the dropdown.
+    function addSelectedAuthors() {
+      const addSelect = document.getElementById("additionalAuthors");
+      const currentAuthorsList = document.getElementById("currentAuthors");
+      const selectedOptions = Array.from(addSelect.selectedOptions);
+      selectedOptions.forEach(option => {
+        const author = option.textContent.trim();
+        // Check if the author already exists.
+        const exists = Array.from(currentAuthorsList.children)
+                          .some(li => li.firstChild.textContent.trim() === author);
+        if (!exists) {
+          const li = document.createElement("li");
+          li.textContent = author + " ";
+          const btn = document.createElement("button");
+          btn.textContent = "Delete";
+          btn.type = "button";
+          btn.onclick = function() {
+            if (currentAuthorsList.children.length > 1) {
+              li.remove();
+            } else {
+              alert("At least one author is required.");
+            }
+          };
+          li.appendChild(btn);
+          currentAuthorsList.appendChild(li);
+        }
+      });
+      addSelect.selectedIndex = -1;
+    }
+    
+    // Add additional genres from the dropdown.
+    function addSelectedGenres() {
+      const addSelect = document.getElementById("additionalGenres");
+      const currentGenresList = document.getElementById("currentGenres");
+      const selectedOptions = Array.from(addSelect.selectedOptions);
+      selectedOptions.forEach(option => {
+        const genre = option.textContent.trim();
+        // Check if the genre already exists.
+        const exists = Array.from(currentGenresList.children)
+                          .some(li => li.firstChild.textContent.trim() === genre);
+        if (!exists) {
+          const li = document.createElement("li");
+          li.textContent = genre + " ";
+          const btn = document.createElement("button");
+          btn.textContent = "Delete";
+          btn.type = "button";
+          btn.onclick = function() {
+            if (currentGenresList.children.length > 1) {
+              li.remove();
+            } else {
+              alert("At least one genre is required.");
+            }
+          };
+          li.appendChild(btn);
+          currentGenresList.appendChild(li);
+        }
+      });
+      addSelect.selectedIndex = -1;
+    }
+    
+    // Submit updated book data.
+    async function updateBook(event) {
+      event.preventDefault();
+      const isbn = document.getElementById("isbn").value;
+      const title = document.getElementById("title").value;
+      const publicationYear = document.getElementById("pubYear").value;
+      const edition = document.getElementById("edition").value;
+      
+      const currentAuthors = Array.from(document.querySelectorAll("#currentAuthors li"))
+                                  .map(li => li.firstChild.textContent.trim());
+      const currentGenres = Array.from(document.querySelectorAll("#currentGenres li"))
+                                  .map(li => li.firstChild.textContent.trim());
+      
+      // Compute differences between original and current lists.
+      const authorsToDelete = originalAuthors.filter(a => !currentAuthors.includes(a));
+      const authorsToAdd = currentAuthors.filter(a => !originalAuthors.includes(a));
+      const genresToDelete = originalGenres.filter(g => !currentGenres.includes(g));
+      const genresToAdd = currentGenres.filter(g => !originalGenres.includes(g));
+      
+      if (currentAuthors.length === 0) {
+        alert("At least one author is required.");
+        return;
+      }
+      if (currentGenres.length === 0) {
+        alert("At least one genre is required.");
+        return;
+      }
+      if (edition.trim() === "") {
+        alert("Edition cannot be empty.");
+        return;
+      }
+      
+      const payload = {
+        title,
+        publicationYear,
+        edition,
+        authorsToAdd,
+        authorsToDelete,
+        genresToAdd,
+        genresToDelete
+      };
+      
+      try {
+        const response = await fetch('/books/' + isbn, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "inventory_books.html";
+      } catch (error) {
+        console.error("Error updating book:", error);
+        alert("Error updating book.");
+      }
+    }
+    
+    // Populate dropdowns for additional authors and genres.
+    async function populateDropdown(url, selectId, valueKey, textFormatter) {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        data.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item[valueKey];
+          option.textContent = textFormatter(item);
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error(`Error fetching data from ${url}:`, error);
+      }
+    }
+    
+    // On page load, prefill the form and populate additional dropdowns.
+    document.addEventListener("DOMContentLoaded", function() {
+      const isbn = getQueryParam("isbn");
+      if (isbn) {
+        fetchBookDetails(isbn);
+      } else {
+        alert("No ISBN provided.");
+      }
+      document.getElementById("editBookForm").addEventListener("submit", updateBook);
+
+      // Populate additional authors dropdown.
+      populateDropdown('/authors', 'additionalAuthors', 'authorID', item => item.firstName + " " + item.lastName);
+      // Populate additional genres dropdown.
+      populateDropdown('/genres', 'additionalGenres', 'genreID', item => item.genreName);
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Edit Book</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a class="active" href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <!-- Navigation for different entities -->
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form id="editBookForm" action="#" method="post">
+      <label for="isbn">ISBN:</label>
+      <input type="text" id="isbn" name="isbn" readonly>
+      
+      <label for="title">Title:</label>
+      <input type="text" id="title" name="title" required>
+      
+      <fieldset>
+        <legend>Book Authors</legend>
+        <p>Currently associated authors:</p>
+        <ul id="currentAuthors">
+          <!-- Current authors populated dynamically -->
+        </ul>
+        <p>Add additional authors (select from existing):</p>
+        <select id="additionalAuthors" name="additionalAuthors[]" multiple>
+          <!-- Options will be populated dynamically -->
+        </select>
+        <button type="button" onclick="addSelectedAuthors()">Add Selected Author(s)</button>
+      </fieldset>
+      
+      <fieldset>
+        <legend>Book Genres</legend>
+        <p>Currently associated genres:</p>
+        <ul id="currentGenres">
+          <!-- Current genres populated dynamically -->
+        </ul>
+        <p>Add additional genres (select from existing):</p>
+        <select id="additionalGenres" name="additionalGenres[]" multiple>
+          <!-- Options will be populated dynamically -->
+        </select>
+        <button type="button" onclick="addSelectedGenres()">Add Selected Genre(s)</button>
+      </fieldset>
+      
+      <label for="pubYear">Publication Year:</label>
+      <input type="number" id="pubYear" name="pubYear" required>
+      
+      <label for="edition">Edition:</label>
+      <input type="text" id="edition" name="edition" required>
+      
+      <button type="submit">Submit Update</button>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_books.html'">
+            Return to Browse Books
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

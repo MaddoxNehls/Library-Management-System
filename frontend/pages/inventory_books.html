@@ -1,0 +1,112 @@
+<!--
+ * Citation:
+ * Date: 02/26/2025
+ * Based on: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+ * Title: Fetch API - Web APIs | MDN
+ * Author: Mozilla Contributors
+ * Notes: Used for reference in implementing data fetching, response handling, and dynamic UI updates
+ -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Browse Books</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    // When the page loads, fetch books from the server and populate the table.
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('/books')
+        .then(response => response.json())
+        .then(data => {
+          const tbody = document.querySelector('table tbody');
+          tbody.innerHTML = ''; // Clear any static content.
+          data.forEach(book => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${book.isbn}</td>
+              <td>${book.title}</td>
+              <td>${book.authors || ''}</td>
+              <td>${book.genres || ''}</td>
+              <td>${book.publicationYear || ''}</td>
+              <td>${book.edition || ''}</td>
+              <td>${book.numberOfCopies || 0}</td>
+              <td>
+                <a href="inventory_books_edit.html?isbn=${book.isbn}">Edit</a>
+                <a href="inventory_books_delete.html?isbn=${book.isbn}">Delete</a>
+                <a href="inventory_copies_add.html?isbn=${book.isbn}">Add New Copy</a>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => console.error('Error fetching books:', err));
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Browse Books</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a class="active" href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <!-- Navigation to switch between entity pages -->
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <h2>Books</h2>
+    <nav class="left-nav">
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_books_add.html'">
+            Add New Book
+          </button>
+        </li>
+      </ul>
+    </nav>
+    <table>
+      <thead>
+        <tr>
+          <th>ISBN</th>
+          <th>Title</th>
+          <th>Authors</th>
+          <th>Genres</th>
+          <th>Publication Year</th>
+          <th>Edition</th>
+          <th>Copies</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Dynamic content will be inserted here -->
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

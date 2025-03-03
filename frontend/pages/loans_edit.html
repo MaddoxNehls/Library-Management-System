@@ -1,0 +1,213 @@
+<!--
+ * Citation:
+ * Date: 03/03/2025
+ * Based on: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+ * Title: Fetch API - Web APIs | MDN
+ * Author: Mozilla Contributors
+ * Notes: Used for reference in implementing data fetching, response handling, and dynamic UI updates
+ -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Return Loan Item</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    // Helper to format ISO date strings to YYYY-MM-DD
+    function formatDate(dateString) {
+      if (!dateString) return "";
+      return dateString.split("T")[0];
+    }
+    
+    async function fetchLoanDetails(loanID) {
+      try {
+        const response = await fetch(`/loans/${loanID}`);
+        if (!response.ok) throw new Error("Loan not found");
+        const loan = await response.json();
+        
+        // Populate fields with formatted dates
+        document.getElementById("loanID").value = loan.loanID;
+        document.getElementById("patronName").value = loan.patron;
+        document.getElementById("copyID").value = loan.copyID;
+        document.getElementById("bookTitle").value = loan.title;
+        document.getElementById("edition").value = loan.edition;
+        document.getElementById("checkoutDate").value = formatDate(loan.checkoutDate);
+        document.getElementById("dueDate").value = formatDate(loan.dueDate);
+        
+        // Check if loan is already returned
+        if (loan.status.toLowerCase() === "returned") {
+          document.getElementById("returnedDate").value = formatDate(loan.returnedDate);
+          document.getElementById("returnedDate").disabled = true;
+          
+          // Disable the Return Item button and show tooltip text
+          document.getElementById("returnButton").disabled = true;
+          document.getElementById("returnButtonTooltip").textContent = "This loan is already returned. Click 'Undo Return' to modify.";
+          
+          // Display the Undo Return button
+          document.getElementById("undoReturnButton").style.display = "inline";
+          
+          // Update the page title accordingly
+          document.getElementById("pageTitle").textContent = `Loan ID ${loan.loanID} is already returned.`;
+        } else {
+          // Otherwise, set returnedDate field to today's date by default and enable the field
+          const today = new Date().toISOString().split("T")[0];
+          document.getElementById("returnedDate").value = today;
+          document.getElementById("returnedDate").disabled = false;
+          
+          // Hide the Undo Return button
+          document.getElementById("undoReturnButton").style.display = "none";
+          
+          // Enable the Return Item button and clear any tooltip text
+          document.getElementById("returnButton").disabled = false;
+          document.getElementById("returnButtonTooltip").textContent = "";
+          
+          // Set a default page title
+          document.getElementById("pageTitle").textContent = `Return Item for Loan ID: ${loan.loanID}`;
+        }
+      } catch (error) {
+        console.error("Error fetching loan details:", error);
+        alert("Error fetching loan details.");
+      }
+    }
+
+    async function returnLoan(event) {
+      event.preventDefault();
+      const loanID = document.getElementById("loanID").value;
+      const returnedDate = document.getElementById("returnedDate").value;
+      
+      const payload = { returnedDate };
+      try {
+        const response = await fetch(`/loans/${loanID}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "loans.html";
+      } catch (error) {
+        console.error("Error returning loan item:", error);
+        alert("Error returning loan item.");
+      }
+    }
+
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      const loanID = getQueryParam("loanID");
+      if (loanID) {
+        fetchLoanDetails(loanID);
+      } else {
+        alert("No Loan ID provided.");
+      }
+      document.getElementById("returnLoanForm").addEventListener("submit", returnLoan);
+    });
+
+    function clearReturnedDate() {
+      document.getElementById("returnedDate").value = "";
+    }
+
+    function enableUndoReturn() {
+      document.getElementById("returnedDate").disabled = false;
+      // Clear the returnedDate immediately
+      clearReturnedDate();
+      // Enable the submit button
+      document.getElementById("returnButton").disabled = false;
+      document.getElementById("returnButtonTooltip").textContent = "";
+      
+      // Hide the Undo Return button when editing is allowed
+      document.getElementById("undoReturnButton").style.display = "none";
+    }
+
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Return Loan Item</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a class="active" href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form id="returnLoanForm" action="#" method="post">
+      <label for="loanID">Loan ID:</label>
+      <input type="text" id="loanID" name="loanID" readonly>
+      
+      <label for="patronName">Patron:</label>
+      <input type="text" id="patronName" name="patronName" readonly>
+      
+      <label for="copyID">Copy ID:</label>
+      <input type="text" id="copyID" name="copyID" readonly>
+      
+      <label for="bookTitle">Book Title:</label>
+      <input type="text" id="bookTitle" name="bookTitle" readonly>
+      
+      <label for="edition">Edition:</label>
+      <input type="text" id="edition" name="edition" readonly>
+      
+      <label for="checkoutDate">Checkout Date:</label>
+      <input type="date" id="checkoutDate" name="checkoutDate" readonly>
+      
+      <label for="dueDate">Due Date:</label>
+      <input type="date" id="dueDate" name="dueDate" readonly>
+      
+      <label for="returnedDate">Returned Date:</label>
+      <div class="input-group">
+        <input type="date" id="returnedDate" name="returnedDate">
+        <button type="button" onclick="clearReturnedDate()">Clear</button>
+        <div class="tooltip">
+          <button type="button" id="undoReturnButton" onclick="enableUndoReturn()">Undo Return</button>
+          <span class="tooltiptext">Clicking this button sets the returned date to NULL.</span>
+        </div>
+      </div>
+      
+      
+      <div class="tooltip">
+        <button type="submit" id="returnButton">Submit Changes</button>
+        <span class="tooltiptext" id="returnButtonTooltip"></span>
+      </div>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='loans.html'">
+            Return to Browse Loans
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

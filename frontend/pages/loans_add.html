@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Loan</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    // Helper function to populate dropdowns dynamically.
+    async function populateDropdown(url, dropdownId, valueKey, textKey) {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const dropdown = document.getElementById(dropdownId);
+        dropdown.innerHTML = '<option value="">Select</option>'; // Clear any existing options
+        data.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item[valueKey];
+          option.textContent = typeof textKey === 'function' ? textKey(item) : item[textKey];
+          dropdown.appendChild(option);
+        });
+      } catch (error) {
+        console.error(`Error populating ${dropdownId}:`, error);
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      // Populate Patron dropdown. the /patrons endpoint returns an array of objects
+      // with keys: patronID, firstName, lastName, phone.
+      populateDropdown(
+        '/patrons',
+        'patron',
+        'patronID',
+        (item) => `${item.firstName} ${item.lastName} - ${item.phone}`
+      );
+      
+      // Populate Copy dropdown. /copies endpoint returns objects with key: copyID.
+      populateDropdown(
+        '/copies',
+        'copyID',
+        'copyID',
+        'copyID'
+      );
+      
+      // Handle form submission.
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const patronID = document.getElementById("patron").value;
+        const copyID = document.getElementById("copyID").value;
+        const checkoutDate = document.getElementById("checkoutDate").value;
+        const dueDate = document.getElementById("dueDate").value;
+        
+        if (!patronID) {
+          alert("Please select a patron.");
+          return;
+        }
+        if (!copyID) {
+          alert("Please select a copy.");
+          return;
+        }
+        
+        const payload = { patronID, copyID, checkoutDate, dueDate };
+        try {
+          const response = await fetch('/loans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          alert(result.message);
+          window.location.href = "loans.html";
+        } catch (error) {
+          console.error("Error adding loan:", error);
+          alert("Failed to add loan.");
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Add Loan</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a class="active" href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form action="#" method="post">
+      <label for="patron">Patron:</label>
+      <select id="patron" name="patronID" required>
+        <!-- Options dynamically populated from /patrons -->
+      </select>
+      
+      <label for="copyID">Copy ID:</label>
+      <select id="copyID" name="copyID" required>
+        <!-- Options dynamically populated from /copies -->
+      </select>
+      
+      <label for="checkoutDate">Checkout Date:</label>
+      <input type="date" id="checkoutDate" name="checkoutDate" required>
+      
+      <label for="dueDate">Due Date:</label>
+      <input type="date" id="dueDate" name="dueDate" required>
+      
+      <button type="submit">Check Out Item</button>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='loans.html'">
+            Return to Browse Loans
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!--
+ * Citation:
+ * Date: 02/26/2025
+ * Based on: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+ * Title: Fetch API - Web APIs | MDN
+ * Author: Mozilla Contributors
+ * Notes: Used for reference in implementing data fetching, response handling, and dynamic UI updates
+ -->
+
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Delete Book</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    // Helper function to extract query parameters from the URL.
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    // Fetch details for a specific book based on ISBN.
+    async function fetchBookDetails(isbn) {
+      try {
+        const response = await fetch(`/books/${isbn}`);
+        if (!response.ok) throw new Error("Book not found");
+        const book = await response.json();
+        // Populate the table with the book details.
+        document.querySelector(".book-info").innerHTML = `
+          <tr>
+            <td>${book.isbn}</td>
+            <td>${book.title}</td>
+            <td>${book.authors || ''}</td>
+            <td>${book.genres || ''}</td>
+            <td>${book.publicationYear || ''}</td>
+            <td>${book.edition || ''}</td>
+            <td>${book.numberOfCopies || 0}</td>
+          </tr>
+        `;
+        // Update the page title with the book information.
+        document.getElementById('pageTitle').textContent = `Delete Book: ISBN ${book.isbn} (${book.title})`;
+      } catch (error) {
+        console.error("Error fetching book details:", error);
+        document.querySelector(".book-info").innerHTML = "<tr><td colspan='7'>Error loading book information.</td></tr>";
+      }
+    }
+    
+    // Send a DELETE request to remove the book.
+    async function deleteBook() {
+      const isbn = getQueryParam("isbn");
+      try {
+        const response = await fetch(`/books/${isbn}`, { method: 'DELETE' });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "inventory_books.html";
+      } catch (error) {
+        console.error("Error deleting book:", error);
+        alert("Error deleting book.");
+      }
+    }
+    
+    // On DOM load, fetch book details and attach the delete handler.
+    document.addEventListener("DOMContentLoaded", function() {
+      const isbn = getQueryParam("isbn");
+      if (isbn) {
+        fetchBookDetails(isbn);
+      } else {
+        alert("No ISBN specified.");
+      }
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (confirm("Are you sure you want to delete this book?")) {
+          deleteBook();
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Delete Book</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a class="active" href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <!-- Inventory entity navigation -->
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <p>Deleting the book will also delete all associated copies.</p>
+    <nav class="left-nav">
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_books.html'">
+            Return to Browse Books
+          </button>
+        </li>
+      </ul>
+    </nav>
+    <table>
+      <thead>
+        <tr>
+          <th>ISBN</th>
+          <th>Title</th>
+          <th>Authors</th>
+          <th>Genres</th>
+          <th>Publication Year</th>
+          <th>Edition</th>
+          <th>Copies</th>
+        </tr>
+      </thead>
+      <tbody class="book-info">
+        <!-- Book details will be populated dynamically -->
+        <tr><td colspan="7">Loading book information...</td></tr>
+      </tbody>
+    </table>
+    <div class="confirmation">
+      <form action="#" method="post">
+        <div class="button-group">
+          <button type="submit" name="confirm" value="yes">Yes</button>
+          <button type="button" onclick="window.location.href='inventory_books.html'">No</button>
+        </div>
+      </form>
+    </div>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

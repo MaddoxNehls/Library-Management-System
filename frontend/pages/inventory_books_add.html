@@ -1,0 +1,169 @@
+<!--
+ * Citation:
+ * Date: 02/26/2025
+ * Based on: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+ * Title: Fetch API - Web APIs | MDN
+ * Author: Mozilla Contributors
+ * Notes: Used for reference in implementing data fetching, response handling, and dynamic UI updates
+ -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add New Book</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    // Function to populate a dropdown from a given endpoint.
+    async function populateDropdown(url, selectId, valueKey, textFormatter) {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        // Clear any existing options.
+        select.innerHTML = '';
+        data.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item[valueKey];
+          option.textContent = textFormatter(item);
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error(`Error fetching data from ${url}:`, error);
+      }
+    }
+
+    // Function to submit the new book data.
+    async function submitBook(event) {
+      event.preventDefault();
+      const isbn = document.getElementById("isbn").value;
+      const title = document.getElementById("title").value;
+      const publicationYear = document.getElementById("pubYear").value;
+      const edition = document.getElementById("edition").value;
+      
+      // Gather selected authors.
+      const authorsDropdown = document.getElementById("authorsDropdown");
+      const authors = Array.from(authorsDropdown.selectedOptions)
+                          .map(opt => opt.textContent.trim());
+      
+      // Gather selected genres.
+      const genresDropdown = document.getElementById("genresDropdown");
+      const genres = Array.from(genresDropdown.selectedOptions)
+                          .map(opt => opt.textContent.trim());
+      
+      // Validate required fields.
+      if (authors.length === 0) {
+        alert("Please select at least one author.");
+        return;
+      }
+      if (genres.length === 0) {
+        alert("Please select at least one genre.");
+        return;
+      }
+      if (edition.trim() === "") {
+        alert("Edition cannot be empty.");
+        return;
+      }
+      
+      const payload = { isbn, title, publicationYear, edition, authors, genres };
+      
+      try {
+        const res = await fetch('/books', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        alert(result.message);
+        // Redirect to books inventory page.
+        window.location.href = "inventory_books.html";
+      } catch (error) {
+        console.error("Error adding book:", error);
+        alert("Failed to add book.");
+      }
+    }
+    
+    // When the page loads, populate dropdowns and attach the submit handler.
+    document.addEventListener("DOMContentLoaded", () => {
+      // Populate the authors dropdown (display as "firstName lastName").
+      populateDropdown('/authors', 'authorsDropdown', 'authorID', item => item.firstName + " " + item.lastName);
+      // Populate the genres dropdown.
+      populateDropdown('/genres', 'genresDropdown', 'genreID', item => item.genreName);
+      
+      document.querySelector("form").addEventListener("submit", submitBook);
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Add New Book</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a class="active" href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <!-- Navigation to switch between different entity pages. -->
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form action="#" method="post">
+      <label for="isbn">ISBN:</label>
+      <input type="text" id="isbn" name="isbn" placeholder="Enter ISBN" required>
+      
+      <label for="title">Title:</label>
+      <input type="text" id="title" name="title" placeholder="Enter Book Title" required>
+      
+      <fieldset>
+        <legend>Book Authors</legend>
+        <p>Select existing authors:</p>
+        <select id="authorsDropdown" name="authors[]" multiple required>
+          <!-- Options will be populated dynamically -->
+        </select>
+      </fieldset>
+      
+      <fieldset>
+        <legend>Book Genres</legend>
+        <p>Select existing genres:</p>
+        <select id="genresDropdown" name="genres[]" multiple required>
+          <!-- Options will be populated dynamically -->
+        </select>
+      </fieldset>
+      
+      <label for="pubYear">Publication Year:</label>
+      <input type="number" id="pubYear" name="pubYear" placeholder="Enter Publication Year" required>
+      
+      <label for="edition">Edition:</label>
+      <input type="text" id="edition" name="edition" placeholder="Enter Edition" required>
+      
+      <button type="submit">Add Book</button>
+    </form>
+    <button onclick="window.location.href='inventory_books.html'">
+      Return to Browse Books
+    </button>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

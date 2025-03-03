@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Copy</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    async function fetchCopyDetails(copyID) {
+      try {
+        const response = await fetch(`/copies/${copyID}`);
+        if (!response.ok) throw new Error("Copy not found");
+        const copy = await response.json();
+        document.getElementById("copyID").value = copy.copyID;
+        document.getElementById("isbn").value = copy.isbn;
+        document.getElementById("title").value = copy.title;
+        document.getElementById("edition").value = copy.edition;
+        document.getElementById("status").value = copy.status;
+        document.getElementById("pageTitle").textContent = `Editing Copy ID: ${copy.copyID}`;
+      } catch (error) {
+        console.error("Error fetching copy details:", error);
+        alert("Error fetching copy details.");
+      }
+    }
+    
+    async function updateCopy(event) {
+      event.preventDefault();
+      const copyID = document.getElementById("copyID").value;
+      const isbn = document.getElementById("isbn").value;
+      const status = document.getElementById("status").value;
+      // Convert the status string to a copyStatusID (1=Available, 2=Checked-Out).
+      const copyStatusID = status === "Available" ? 1 : 2;
+      const payload = { isbn, copyStatusID };
+      try {
+        const response = await fetch(`/copies/${copyID}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "inventory_copies.html";
+      } catch (error) {
+        console.error("Error updating copy:", error);
+        alert("Error updating copy.");
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+      const copyID = getQueryParam("copyID");
+      if (copyID) {
+        fetchCopyDetails(copyID);
+      } else {
+        alert("No Copy ID provided.");
+      }
+      document.getElementById("editCopyForm").addEventListener("submit", updateCopy);
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Edit Copy</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a class="active" href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form id="editCopyForm" action="#" method="post">
+      <label for="copyID">Copy ID:</label>
+      <input type="text" id="copyID" name="copyID" readonly>
+      
+      <label for="isbn">ISBN:</label>
+      <input type="text" id="isbn" name="isbn" readonly>
+      
+      <label for="title">Title:</label>
+      <input type="text" id="title" name="title" readonly>
+      
+      <label for="edition">Edition:</label>
+      <input type="text" id="edition" name="edition" readonly>
+      
+      <label for="status">Status:</label>
+      <select id="status" name="status">
+        <option value="Available">Available</option>
+        <option value="Checked-Out">Checked-Out</option>
+      </select>
+      
+      <button type="submit">Submit Update</button>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_copies.html'">
+            Return to Browse Copies
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

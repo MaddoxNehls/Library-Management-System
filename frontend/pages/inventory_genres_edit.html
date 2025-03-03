@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Genre</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    async function fetchGenre(genreID) {
+      try {
+        const response = await fetch(`/genres/${genreID}`);
+        if (!response.ok) throw new Error("Genre not found");
+        const genre = await response.json();
+        document.getElementById("genreID").value = genre.genreID;
+        document.getElementById("genreName").value = genre.genreName;
+        document.getElementById("pageTitle").textContent = `Editing Genre: ID ${genre.genreID}`;
+      } catch (error) {
+        console.error("Error fetching genre details:", error);
+        alert("Error fetching genre details.");
+      }
+    }
+    
+    async function updateGenre(event) {
+      event.preventDefault();
+      const genreID = document.getElementById("genreID").value;
+      const genreName = document.getElementById("genreName").value.trim();
+      if (genreName === "") {
+        alert("Genre Name is required.");
+        return;
+      }
+      const payload = { genreName };
+      try {
+        const response = await fetch('/genres/' + genreID, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "inventory_genres.html";
+      } catch (error) {
+        console.error("Error updating genre:", error);
+        alert("Error updating genre.");
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      const genreID = getQueryParam("genreID");
+      if (genreID) {
+        fetchGenre(genreID);
+      } else {
+        alert("No Genre ID provided.");
+      }
+      document.getElementById("editGenreForm").addEventListener("submit", updateGenre);
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Edit Genre</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a class="active" href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <form id="editGenreForm" action="#" method="post">
+      <label for="genreID">Genre ID:</label>
+      <input type="text" id="genreID" name="genreID" readonly>
+      
+      <label for="genreName">Genre Name:</label>
+      <input type="text" id="genreName" name="genreName" required>
+      
+      <button type="submit">Submit Update</button>
+    </form>
+    <nav>
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_genres.html'">
+            Return to Browse Genres
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

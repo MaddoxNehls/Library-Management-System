@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Delete Genre</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    async function fetchGenre(genreID) {
+      try {
+        const response = await fetch(`/genres/${genreID}`);
+        if (!response.ok) throw new Error("Genre not found");
+        const genre = await response.json();
+        document.querySelector(".genre-info").innerHTML = `
+          <tr>
+            <td>${genre.genreID}</td>
+            <td>${genre.genreName}</td>
+            <td>${genre.numberOfBooks || 0}</td>
+          </tr>
+        `;
+        document.getElementById('pageTitle').textContent = `Delete Genre: ID ${genre.genreID} (${genre.genreName})`;
+      } catch (error) {
+        console.error("Error fetching genre details:", error);
+        document.querySelector(".genre-info").innerHTML = "<tr><td colspan='3'>Error loading genre information.</td></tr>";
+      }
+    }
+    
+    async function deleteGenre() {
+      const genreID = getQueryParam("genreID");
+      try {
+        const response = await fetch(`/genres/${genreID}`, { method: 'DELETE' });
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = "inventory_genres.html";
+      } catch (error) {
+        console.error("Error deleting genre:", error);
+        alert("Error deleting genre.");
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+      const genreID = getQueryParam("genreID");
+      if (genreID) {
+        fetchGenre(genreID);
+      } else {
+        alert("No Genre ID specified.");
+      }
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (confirm("Are you sure you want to delete this genre?")) {
+          deleteGenre();
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Delete Genre</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a class="active" href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <p>Deleting the genre will remove it from all associated books.</p>
+    <nav class="left-nav">
+      <ul>
+        <li>
+          <button onclick="window.location.href='inventory_genres.html'">
+            Return to Browse Genres
+          </button>
+        </li>
+      </ul>
+    </nav>
+    <table>
+      <thead>
+        <tr>
+          <th>Genre ID</th>
+          <th>Genre Name</th>
+          <th>Number of Books</th>
+        </tr>
+      </thead>
+      <tbody class="genre-info">
+        <tr><td colspan="3">Loading genre information...</td></tr>
+      </tbody>
+    </table>
+    <div class="confirmation">
+      <form action="#" method="post">
+          <div class="button-group">
+          <button type="submit" name="confirm" value="yes">Yes</button>
+          <button type="button" onclick="window.location.href='inventory_genres.html'">No</button>
+          </div>
+      </form>
+    </div>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>

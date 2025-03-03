@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Browse Loans</title>
+  <link rel="icon" type="image/png" href="../assets/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="../assets/favicons/favicon.ico" />
+  <link rel="manifest" href="../assets/favicons/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await fetch('/loans');
+        const loans = await response.json();
+        const tbody = document.querySelector("table tbody");
+        tbody.innerHTML = "";
+        loans.forEach(loan => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${loan.loanID}</td>
+            <td>${loan.patron}</td>
+            <td>${loan.copyID}</td>
+            <td>${loan.title}</td>
+            <td>${loan.edition}</td>
+            <td>${loan.checkoutDate}</td>
+            <td>${loan.dueDate}</td>
+            <td>${loan.returnedDate}</td>
+            <td>${loan.status}</td>
+            <td>
+              <a href="loans_edit.html?loanID=${loan.loanID}">Return</a>
+              <a href="loans_delete.html?loanID=${loan.loanID}">Delete</a>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error("Error fetching loans:", error);
+      }
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Browse Loans</h1>
+    <nav class="primary-nav">
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="inventory_books.html">Books</a></li>
+        <li><a href="inventory_authors.html">Authors</a></li>
+        <li><a href="inventory_genres.html">Genres</a></li>
+        <li><a href="inventory_copies.html">Copies</a></li>
+        <li><a href="patrons.html">Patrons</a></li>
+        <li><a class="active" href="loans.html">Loans</a></li>
+      </ul>
+    </nav>
+  </header>
+  <nav class="inventory-nav">
+    <select onchange="window.location.href=this.value">
+      <option value="" selected disabled>Select Entity</option>
+      <option value="inventory_books.html">Books</option>
+      <option value="inventory_authors.html">Authors</option>
+      <option value="inventory_genres.html">Genres</option>
+      <option value="inventory_copies.html">Copies</option>
+      <option value="patrons.html">Patrons</option>
+      <option value="loans.html">Loans</option>
+    </select>
+  </nav>
+  <main>
+    <h2>Loans</h2>
+    <nav class="left-nav">
+      <ul>
+        <li>
+          <button onclick="window.location.href='loans_add.html'">
+            Add New Loan
+          </button>
+        </li>
+      </ul>
+    </nav>
+    <table>
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Patron</th>
+          <th>Copy ID</th>
+          <th>Book Title</th>
+          <th>Edition</th>
+          <th>Checkout Date</th>
+          <th>Due Date</th>
+          <th>Returned Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Dynamic content here -->
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    <p>&copy; Riverside City Library</p>
+  </footer>
+</body>
+</html>
