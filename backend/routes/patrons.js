@@ -15,9 +15,14 @@ const { query } = require('../config/db');
 router.get('/', async (req, res) => {
   try {
     const sql = `
-      SELECT p.patronID, p.firstName, p.lastName, p.email, p.phone,
-             COUNT(l.loanID) AS itemsCheckedOut,
-             COUNT(CASE WHEN l.loanStatusID = 2 THEN 1 END) AS itemsOverdue
+      SELECT 
+        p.patronID, 
+        p.firstName, 
+        p.lastName, 
+        p.email, 
+        p.phone,
+        SUM(CASE WHEN l.loanID IS NOT NULL AND l.returnedDate IS NULL THEN 1 ELSE 0 END) AS itemsCheckedOut,
+        SUM(CASE WHEN l.loanID IS NOT NULL AND l.loanStatusID = 2 AND l.returnedDate IS NULL THEN 1 ELSE 0 END) AS itemsOverdue
       FROM Patrons p
       LEFT JOIN Loans l ON p.patronID = l.patronID
       GROUP BY p.patronID
@@ -35,16 +40,24 @@ router.get('/:patronID', async (req, res) => {
   try {
     const patronID = req.params.patronID;
     const sql = `
-      SELECT p.patronID, p.firstName, p.lastName, p.email, p.phone,
-             COUNT(l.loanID) AS itemsCheckedOut,
-             COUNT(CASE WHEN l.loanStatusID = 2 THEN 1 END) AS itemsOverdue
+      SELECT 
+        p.patronID, 
+        p.firstName, 
+        p.lastName, 
+        p.email, 
+        p.phone,
+        SUM(CASE WHEN l.loanID IS NOT NULL AND l.returnedDate IS NULL THEN 1 ELSE 0 END) AS itemsCheckedOut,
+        SUM(CASE WHEN l.loanID IS NOT NULL AND l.loanStatusID = 2 AND l.returnedDate IS NULL THEN 1 ELSE 0 END) AS itemsOverdue
       FROM Patrons p
       LEFT JOIN Loans l ON p.patronID = l.patronID
       WHERE p.patronID = ?
-      GROUP BY p.patronID;
+      GROUP BY p.patronID
+      ORDER BY p.patronID ASC;
     `;
     const results = await query(sql, [patronID]);
-    if (results.length === 0) return res.status(404).json({ error: "Patron not found." });
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Patron not found." });
+    }
     res.json(results[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
